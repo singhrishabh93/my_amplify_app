@@ -4,7 +4,6 @@ import 'package:amplify_authenticator/amplify_authenticator.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:my_amplify_app/models/ModelProvider.dart';
-
 import 'amplify_outputs.dart';
 
 Future<void> main() async {
@@ -41,6 +40,42 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Authenticator(
+      authenticatorBuilder: (BuildContext context, AuthenticatorState state) {
+        switch (state.currentStep) {
+          case AuthenticatorStep.signIn:
+            return CustomScaffold(
+              state: state,
+              body: SignInForm(),
+              footer: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Don\'t have an account?'),
+                  TextButton(
+                    onPressed: () => state.changeStep(AuthenticatorStep.signUp),
+                    child: const Text('Sign Up'),
+                  ),
+                ],
+              ),
+            );
+          case AuthenticatorStep.signUp:
+            return CustomScaffold(
+              state: state,
+              body: SignUpForm(),
+              footer: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Already have an account?'),
+                  TextButton(
+                    onPressed: () => state.changeStep(AuthenticatorStep.signIn),
+                    child: const Text('Sign In'),
+                  ),
+                ],
+              ),
+            );
+          default:
+            return null;
+        }
+      },
       child: MaterialApp(
         builder: Authenticator.builder(),
         home: const SafeArea(
@@ -162,5 +197,42 @@ class _TodoScreenState extends State<TodoScreen> {
     } on ApiException catch (e) {
       safePrint('Query failed: $e');
     }
+  }
+}
+
+class CustomScaffold extends StatelessWidget {
+  const CustomScaffold({
+    super.key,
+    required this.state,
+    required this.body,
+    this.footer,
+  });
+
+  final AuthenticatorState state;
+  final Widget body;
+  final Widget? footer;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 32),
+                child: Center(child: FlutterLogo(size: 100)),
+              ),
+              Container(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: body,
+              ),
+            ],
+          ),
+        ),
+      ),
+      persistentFooterButtons: footer != null ? [footer!] : null,
+    );
   }
 }
