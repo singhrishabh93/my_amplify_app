@@ -39,6 +39,7 @@ dependencies:
   amplify_authenticator: ^2.3.1
   amplify_flutter: ^2.5.0
   amplify_api: ^2.5.0
+  mirai: ^0.8.0
 
 dev_dependencies:
   flutter_test:
