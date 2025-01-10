@@ -37,6 +37,7 @@ Future<void> _configureAmplify() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Authenticator(
@@ -45,32 +46,12 @@ class MyApp extends StatelessWidget {
           case AuthenticatorStep.signIn:
             return CustomScaffold(
               state: state,
-              body: SignInForm(),
-              footer: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Don\'t have an account?'),
-                  TextButton(
-                    onPressed: () => state.changeStep(AuthenticatorStep.signUp),
-                    child: const Text('Sign Up'),
-                  ),
-                ],
-              ),
+              body: SignInFormDecorator(state: state),
             );
           case AuthenticatorStep.signUp:
             return CustomScaffold(
               state: state,
-              body: SignUpForm(),
-              footer: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Already have an account?'),
-                  TextButton(
-                    onPressed: () => state.changeStep(AuthenticatorStep.signIn),
-                    child: const Text('Sign In'),
-                  ),
-                ],
-              ),
+              body: SignUpFormDecorator(state: state),
             );
           default:
             return null;
@@ -130,7 +111,7 @@ class _TodoScreenState extends State<TodoScreen> {
           _refreshTodos();
         },
       ),
-      body: _todos.isEmpty == true
+      body: _todos.isEmpty
           ? const Center(
               child: Text(
                 "The list is empty.\nAdd some items by clicking the floating action button.",
@@ -149,9 +130,9 @@ class _TodoScreenState extends State<TodoScreen> {
                       final response =
                           await Amplify.API.mutate(request: request).response;
                       if (response.hasErrors) {
-                        safePrint('Updating Todo failed. ${response.errors}');
+                        safePrint('Deleting Todo failed. ${response.errors}');
                       } else {
-                        safePrint('Updating Todo successful.');
+                        safePrint('Deleting Todo successful.');
                         await _refreshTodos();
                         return true;
                       }
@@ -200,39 +181,123 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 }
 
+class SignInFormDecorator extends StatelessWidget {
+  final AuthenticatorState state;
+
+  const SignInFormDecorator({required this.state, Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF7F7F7), // Background color
+      ),
+      child: Center(
+        child: Card(
+          elevation: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock, size: 80, color: Colors.blueAccent), // Custom logo
+                const SizedBox(height: 16),
+                const Text(
+                  'Welcome Back!',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SignInForm(),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => state.changeStep(AuthenticatorStep.signUp),
+                  child: const Text("Don't have an account? Sign Up"),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SignUpFormDecorator extends StatelessWidget {
+  final AuthenticatorState state;
+
+  const SignUpFormDecorator({required this.state, Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF7F7F7), // Background color
+      ),
+      child: Center(
+        child: Card(
+          elevation: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.person_add, size: 80, color: Colors.green), // Custom logo
+                const SizedBox(height: 16),
+                const Text(
+                  'Create an Account',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SignUpForm(),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 32,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () => state.changeStep(AuthenticatorStep.signIn),
+                  child: const Text("Already have an account? Sign In"),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class CustomScaffold extends StatelessWidget {
   const CustomScaffold({
     super.key,
     required this.state,
     required this.body,
-    this.footer,
   });
 
   final AuthenticatorState state;
   final Widget body;
-  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 32),
-                child: Center(child: FlutterLogo(size: 100)),
-              ),
-              Container(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: body,
-              ),
-            ],
-          ),
-        ),
+      backgroundColor: Colors.white,
+      body: Center(
+        child: body,
       ),
-      persistentFooterButtons: footer != null ? [footer!] : null,
     );
   }
 }
