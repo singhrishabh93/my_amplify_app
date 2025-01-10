@@ -22,8 +22,21 @@ class _TodoScreenState extends State<TodoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Todos'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              // Sign-out logic goes here (if implemented)
+              safePrint('Sign-out pressed');
+            },
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         label: const Text('Add Random Todo'),
+        icon: const Icon(Icons.add),
         onPressed: () async {
           final newTodo = Todo(
             id: uuid(),
@@ -45,45 +58,79 @@ class _TodoScreenState extends State<TodoScreen> {
               child: Text(
                 "The list is empty.\nAdd some items by clicking the floating action button.",
                 textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
             )
           : ListView.builder(
+              padding: const EdgeInsets.all(8),
               itemCount: _todos.length,
               itemBuilder: (context, index) {
                 final todo = _todos[index];
-                return Dismissible(
-                  key: UniqueKey(),
-                  confirmDismiss: (direction) async {
-                    if (direction == DismissDirection.endToStart) {
-                      final request = ModelMutations.delete(todo);
-                      final response =
-                          await Amplify.API.mutate(request: request).response;
-                      if (response.hasErrors) {
-                        safePrint('Deleting Todo failed. ${response.errors}');
-                      } else {
-                        safePrint('Deleting Todo successful.');
-                        await _refreshTodos();
-                        return true;
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Dismissible(
+                    key: UniqueKey(),
+                    confirmDismiss: (direction) async {
+                      if (direction == DismissDirection.endToStart) {
+                        final request = ModelMutations.delete(todo);
+                        final response =
+                            await Amplify.API.mutate(request: request).response;
+                        if (response.hasErrors) {
+                          safePrint('Deleting Todo failed. ${response.errors}');
+                        } else {
+                          safePrint('Deleting Todo successful.');
+                          await _refreshTodos();
+                          return true;
+                        }
                       }
-                    }
-                    return false;
-                  },
-                  child: CheckboxListTile.adaptive(
-                    value: todo.isDone,
-                    title: Text(todo.content!),
-                    onChanged: (isChecked) async {
-                      final request = ModelMutations.update(
-                        todo.copyWith(isDone: isChecked!),
-                      );
-                      final response =
-                          await Amplify.API.mutate(request: request).response;
-                      if (response.hasErrors) {
-                        safePrint('Updating Todo failed. ${response.errors}');
-                      } else {
-                        safePrint('Updating Todo successful.');
-                        await _refreshTodos();
-                      }
+                      return false;
                     },
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      leading: Icon(
+                        todo.isDone ?? false ? Icons.check_circle : Icons.radio_button_unchecked,
+                        color: todo.isDone ?? false ? Colors.green : Colors.grey,
+                      ),
+                      title: Text(
+                        todo.content!,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          decoration: todo.isDone ?? false ? TextDecoration.lineThrough : null,
+                          color: todo.isDone ?? false ? Colors.grey : Colors.black,
+                        ),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          final request = ModelMutations.delete(todo);
+                          final response = await Amplify.API.mutate(request: request).response;
+                          if (response.hasErrors) {
+                            safePrint('Deleting Todo failed. ${response.errors}');
+                          } else {
+                            safePrint('Deleting Todo successful.');
+                            await _refreshTodos();
+                          }
+                        },
+                      ),
+                      onTap: () async {
+                        final request = ModelMutations.update(
+                          todo.copyWith(isDone: !(todo.isDone ?? false)),
+                        );
+                        final response =
+                            await Amplify.API.mutate(request: request).response;
+                        if (response.hasErrors) {
+                          safePrint('Updating Todo failed. ${response.errors}');
+                        } else {
+                          safePrint('Updating Todo successful.');
+                          await _refreshTodos();
+                        }
+                      },
+                    ),
                   ),
                 );
               },
