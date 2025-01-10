@@ -201,7 +201,11 @@ class SignInFormDecorator extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.lock, size: 80, color: Colors.blueAccent), // Custom logo
+                // const Icon(Icons.lock, size: 80, color: Colors.blueAccent), // Custom logo
+                Image.asset(
+                  'assets/img2.png',
+                  height: 80,
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Welcome Back!',
@@ -246,7 +250,11 @@ class SignUpFormDecorator extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.person_add, size: 80, color: Colors.green), // Custom logo
+                // const Icon(Icons.person_add, size: 80, color: Colors.green), // Custom logo
+                Image.asset(
+                  'assets/img2.png',
+                  height: 80,
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Create an Account',
