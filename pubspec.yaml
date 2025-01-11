@@ -40,6 +40,9 @@ dependencies:
   amplify_flutter: ^2.5.0
   amplify_api: ^2.5.0
   mirai: ^0.8.0
+  google_fonts: ^6.2.1
+  google_generative_ai: ^0.4.6
+  animated_text_kit: ^4.2.2
 
 dev_dependencies:
   flutter_test:
