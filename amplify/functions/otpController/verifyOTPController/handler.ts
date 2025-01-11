@@ -40,7 +40,7 @@ export const handler: APIGatewayProxyHandler = async (event, context) => {
       attempts: otpRecord.attempts
     });
 
-    if (Date.now() > otpRecord.expiresAt) {
+    if (Date.now() / 1000 > otpRecord.expiresAt) {
       console.log('[OTP_VERIFIER] OTP expired:', { phoneNumber });
       return {
         statusCode: 400,

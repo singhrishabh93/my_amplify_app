@@ -41,6 +41,16 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       throw new Error("OTPRecord schema not found");
     }
 
+    // Check and delete existing record
+
+    console.log("[OTP_GENERATOR] Deleting existing record for:", phoneNumber);
+    try{
+      await client.models.OTPRecord.delete({ phoneNumber });
+    }catch(error){
+      console.log("[OTP_GENERATOR] No existing record found for:", phoneNumber);
+    }
+    
+
     // Create record
     console.log("Creating OTP record...");
     const result = await client.models.OTPRecord.create({
@@ -54,21 +64,20 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     console.log("OTP record created:", JSON.stringify(result, null, 2));
 
-    // Verify record exists
-    const verifyRecord = await client.models.OTPRecord.get({
-      phoneNumber,
-    });
-    console.log(
-      "Verification query result:",
-      JSON.stringify(verifyRecord, null, 2)
-    );
+    // // Verify record exists
+    // const verifyRecord = await client.models.OTPRecord.get({
+    //   phoneNumber,
+    // });
+    // console.log(
+    //   "Verification query result:",
+    //   JSON.stringify(verifyRecord, null, 2)
+    // );
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         message: "OTP generated successfully",
         phoneNumber,
-        recordCreated: !!verifyRecord,
       }),
     };
   } catch (error) {

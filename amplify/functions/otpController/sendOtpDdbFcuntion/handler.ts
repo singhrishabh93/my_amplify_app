@@ -18,13 +18,14 @@ export const handler = async (event: DynamoDBStreamEvent) => {
         const otp = record.dynamodb?.NewImage?.otp?.S;
 
         if (phoneNumber && otp) {
-          await sns.publish({
+          const response = await sns.publish({
             PhoneNumber: phoneNumber,
             Message: `Your OTP is: ${otp}. Valid for 2 minutes.`
           }).promise();
           
           console.log('[OTP_SENDER] SMS sent:', {
             phoneNumber,
+            response,
           });
         }
       }
