@@ -33,15 +33,15 @@ class _ChatScreenState extends State<ChatScreen>
   final List<Map<String, dynamic>> predefinedPrompts = [
     {
       "icon": "🛍️", // Emoji as a string
-      "text": "I have a party this Friday \nnight, suggest fits!"
+      "text": "I have a party this Friday night, suggest fits!"
     },
     {
       "icon": "☔️", // Emoji as a string
-      "text": "It’s raining outside, what \nshould I wear to my office?"
+      "text": "It’s raining outside, what should I wear to my office?"
     },
     {
       "icon": "👗", // Emoji as a string
-      "text": "Can you help me pair up a \ndress? Here’s a picture of it"
+      "text": "Can you help me pair up a dress? Here’s a picture of it"
     },
   ];
 
@@ -238,13 +238,20 @@ class _ChatScreenState extends State<ChatScreen>
                                       margin: const EdgeInsets.symmetric(
                                           vertical: 8),
                                       padding: const EdgeInsets.all(16),
+                                      constraints: BoxConstraints(
+                                        maxWidth: MediaQuery.of(context)
+                                                .size
+                                                .width *
+                                            0.7, // Set container width to 70%
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(18),
-                                            bottomLeft: Radius.circular(18),
-                                            bottomRight: Radius.circular(0),
-                                            topRight: Radius.circular(18)),
+                                          topLeft: Radius.circular(18),
+                                          bottomLeft: Radius.circular(18),
+                                          bottomRight: Radius.circular(0),
+                                          topRight: Radius.circular(18),
+                                        ),
                                         border: Border.all(
                                             color: Color(0xffA99AFF)),
                                       ),
@@ -266,6 +273,8 @@ class _ChatScreenState extends State<ChatScreen>
                                                 fontWeight: FontWeight.w500,
                                                 fontFamily: "SatoshiR",
                                               ),
+                                              softWrap:
+                                                  true, // Allow text to wrap
                                             ),
                                           ),
                                         ],
