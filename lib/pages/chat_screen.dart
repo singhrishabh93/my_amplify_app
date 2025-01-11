@@ -49,7 +49,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    // Add static first message when the screen is initialized
+
+    // Add static first welcome message when the screen is initialized
     _messages.add(Message(
       isUser: false,
       message: "Hey ✨\nHow are you doing?",
@@ -227,85 +228,78 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
           Expanded(
             child: Stack(
               children: [
-                _messages.isEmpty
-                    ? Align(
-                        alignment: Alignment.bottomRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: predefinedPrompts.map((prompt) {
-                                return GestureDetector(
-                                  onTap: () =>
-                                      sendPromptMessage(prompt['text']),
-                                  child: IntrinsicWidth(
-                                    child: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 8),
-                                      padding: const EdgeInsets.all(16),
-                                      constraints: BoxConstraints(
-                                        maxWidth: MediaQuery.of(context)
-                                                .size
-                                                .width *
-                                            0.7, // Set container width to 70%
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(18),
-                                          bottomLeft: Radius.circular(18),
-                                          bottomRight: Radius.circular(0),
-                                          topRight: Radius.circular(18),
-                                        ),
-                                        border: Border.all(
-                                            color: Color(0xffA99AFF)),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Text(
-                                            prompt['icon'],
-                                            style: TextStyle(
-                                              fontSize:
-                                                  30, // Adjust font size as needed for the emoji
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              prompt['text'],
-                                              style: const TextStyle(
-                                                fontSize: 17,
-                                                fontWeight: FontWeight.w500,
-                                                fontFamily: "SatoshiR",
-                                              ),
-                                              softWrap:
-                                                  true, // Allow text to wrap
-                                            ),
-                                          ),
-                                        ],
+                ListView.builder(
+                  itemCount: _messages.length + (isTyping ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == _messages.length && isTyping) {
+                      return buildTypingIndicator();
+                    }
+                    final message = _messages[index];
+                    return Messages(
+                      isUser: message.isUser,
+                      message: message.message,
+                      date: DateFormat('HH:mm').format(message.date),
+                      onAnimatedTextFinished: () {},
+                    );
+                  },
+                ),
+                if (_messages.length == 1)
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: predefinedPrompts.map((prompt) {
+                          return GestureDetector(
+                            onTap: () => sendPromptMessage(prompt['text']),
+                            child: IntrinsicWidth(
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(vertical: 8),
+                                padding: const EdgeInsets.all(16),
+                                constraints: BoxConstraints(
+                                  maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(18),
+                                    bottomLeft: Radius.circular(18),
+                                    bottomRight: Radius.circular(0),
+                                    topRight: Radius.circular(18),
+                                  ),
+                                  border: Border.all(color: const Color(0xffA99AFF)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      prompt['icon'],
+                                      style: const TextStyle(
+                                        fontSize: 30,
                                       ),
                                     ),
-                                  ),
-                                );
-                              }).toList()),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: _messages.length + (isTyping ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index == _messages.length && isTyping) {
-                            return buildTypingIndicator();
-                          }
-                          final message = _messages[index];
-                          return Messages(
-                            isUser: message.isUser,
-                            message: message.message,
-                            date: DateFormat('HH:mm').format(message.date),
-                            onAnimatedTextFinished: () {},
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        prompt['text'],
+                                        style: const TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: "SatoshiR",
+                                        ),
+                                        softWrap: true,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           );
-                        },
+                        }).toList(),
                       ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -387,4 +381,3 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
     );
   }
 }
-
