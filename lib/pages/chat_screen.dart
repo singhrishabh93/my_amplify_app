@@ -61,8 +61,52 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: background,
-        title: Text('Gemini',style: GoogleFonts.poppins(color: white, fontWeight: FontWeight.bold)),
+        toolbarHeight: 75,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(
+            color: Color(0xffDDDDDD),
+            height: 1.0,
+          ),
+        ),
+        title: Row(
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios,
+                color: Colors.black,
+                size: 29,
+              ),
+              onPressed: () {},
+            ),
+            Image.asset(
+              'assets/monova.png',
+              height: 38,
+              width: 38,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'AI Stylist',
+              style: TextStyle(
+                color: Color(0xff1f1f1f),
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                fontFamily: "SatoshiR"
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: Colors.black,
+            ),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -75,14 +119,16 @@ class _ChatScreenState extends State<ChatScreen> {
                 return Messages(
                   isUser: message.isUser,
                   message: message.message,
-                  date: DateFormat('HH:mm').format(message.date), onAnimatedTextFinished: onAnimatedTextFinished,
+                  date: DateFormat('HH:mm').format(message.date),
+                  onAnimatedTextFinished: onAnimatedTextFinished,
                   // onAnimatedTextFinished: onAnimatedTextFinished,
                 );
               },
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: medium, vertical: small),
+            padding:
+                const EdgeInsets.symmetric(horizontal: medium, vertical: small),
             child: Expanded(
               flex: 20,
               child: TextFormField(
@@ -90,7 +136,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 minLines: 1,
                 controller: _userMessage,
                 decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.fromLTRB(medium, 0, small, 0),
+                  contentPadding:
+                      const EdgeInsets.fromLTRB(medium, 0, small, 0),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(xlarge),
                   ),
@@ -104,18 +151,20 @@ class _ChatScreenState extends State<ChatScreen> {
                     },
                     child: isLoading
                         ? Container(
-                      width: medium,
-                      height: medium,
-                      margin: const EdgeInsets.all(xsmall),
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(white),
-                        strokeWidth: 3,
-                      ),
-                    )
+                            width: medium,
+                            height: medium,
+                            margin: const EdgeInsets.all(xsmall),
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(white),
+                              strokeWidth: 3,
+                            ),
+                          )
                         : Icon(
-                      Icons.arrow_upward,
-                      color: _userMessage.text.isNotEmpty ? Colors.white : const Color(0x5A6C6C65),
-                    ),
+                            Icons.arrow_upward,
+                            color: _userMessage.text.isNotEmpty
+                                ? Colors.black
+                                : const Color(0x5A6C6C65),
+                          ),
                   ),
                 ),
                 style: promptText,

@@ -33,10 +33,10 @@ class Messages extends StatelessWidget {
       decoration: BoxDecoration(
         color: isUser ? userChat : resChat,
         borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(xsmall),
-          bottomLeft: isUser ? const Radius.circular(xsmall) : Radius.zero,
-          topRight: const Radius.circular(xsmall),
-          bottomRight: !isUser ? const Radius.circular(xsmall) : Radius.zero,
+          topLeft: const Radius.circular(18),
+          bottomLeft: isUser ? const Radius.circular(18) : Radius.zero,
+          topRight: const Radius.circular(18),
+          bottomRight: !isUser ? const Radius.circular(18) : Radius.zero,
         ),
       ),
       child: Column(
@@ -66,15 +66,15 @@ class Messages extends StatelessWidget {
               message,
               style: messageText,
             ),
-          Row(
-            mainAxisAlignment: isUser ? MainAxisAlignment.start : MainAxisAlignment.end,
-            children: [
-              Text(
-                "\n$date",
-                style: dateText,
-              ),
-            ],
-          ),
+          // Row(
+          //   mainAxisAlignment: isUser ? MainAxisAlignment.start : MainAxisAlignment.end,
+          //   children: [
+          //     Text(
+          //       "\n$date",
+          //       style: dateText,
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );
