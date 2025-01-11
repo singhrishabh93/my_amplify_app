@@ -1,4 +1,5 @@
 import 'package:amplify_api/amplify_api.dart';
+import 'package:amplify_authenticator/amplify_authenticator.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:my_amplify_app/models/Todo.dart';
@@ -25,13 +26,7 @@ class _TodoScreenState extends State<TodoScreen> {
       appBar: AppBar(
         title: const Text('Todos'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              // Sign-out logic goes here (if implemented)
-              safePrint('Sign-out pressed');
-            },
-          ),
+            SignOutButton(),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(

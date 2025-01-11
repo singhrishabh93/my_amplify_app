@@ -62,12 +62,7 @@ class MyApp extends StatelessWidget {
         builder: Authenticator.builder(),
         home: const SafeArea(
           child: Scaffold(
-            body: Column(
-              children: [
-                SignOutButton(),
-                Expanded(child: TodoScreen()),
-              ],
-            ),
+            body: TodoScreen(),
           ),
         ),
       ),
