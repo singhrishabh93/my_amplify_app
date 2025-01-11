@@ -30,12 +30,19 @@ class _ChatScreenState extends State<ChatScreen>
   final model = GenerativeModel(model: 'gemini-pro', apiKey: apiKey);
   final List<Message> _messages = [];
 
-  final List<String> predefinedPrompts = [
-    "Bold & playful",
-    "Suggest an outfit for a summer day",
-    "How can I style a black blazer?",
-    "Ideas for casual yet chic attire?",
-    "What shoes go with beige trousers?"
+  final List<Map<String, dynamic>> predefinedPrompts = [
+    {
+      "icon": Icons.shopping_bag,
+      "text": "I have a party this Friday \nnight, suggest fits!"
+    },
+    {
+      "icon": Icons.umbrella,
+      "text": "It’s raining outside, what \nshould I wear to my office?"
+    },
+    {
+      "icon": Icons.monitor_heart,
+      "text": "Can you help me pair up a \ndress? Here’s a picture of it"
+    },
   ];
 
   late Timer typingTimer;
@@ -212,55 +219,78 @@ class _ChatScreenState extends State<ChatScreen>
       body: Column(
         children: [
           Expanded(
-            child: _messages.isEmpty
-                ? Center(
-                    child: Wrap(
-                      spacing: 12.0,
-                      runSpacing: 12.0,
-                      children: predefinedPrompts.map((prompt) {
-                        return GestureDetector(
-                          onTap: () => sendPromptMessage(prompt),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(25),
-                              border: Border.all(
-                                color: const Color(0xFFDDDDDD),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Text(
-                              prompt,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontFamily: "SatoshiR",
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: _messages.length + (isTyping ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _messages.length && isTyping) {
-                        return buildTypingIndicator();
-                      }
-                      final message = _messages[index];
-                      return Messages(
-                        isUser: message.isUser,
-                        message: message.message,
-                        date: DateFormat('HH:mm').format(message.date),
-                        onAnimatedTextFinished: () {},
-                      );
-                    },
-                  ),
+            child: Stack(
+              children: [
+                _messages.isEmpty
+                    ? Align(
+                        alignment: Alignment.bottomRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: predefinedPrompts.map((prompt) {
+                                return GestureDetector(
+                                  onTap: () =>
+                                      sendPromptMessage(prompt['text']),
+                                  child: IntrinsicWidth(
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 8),
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(18),
+                                            bottomLeft: Radius.circular(18),
+                                            bottomRight: Radius.circular(0),
+                                            topRight: Radius.circular(18)),
+                                        border: Border.all(
+                                            color: Color(0xffA99AFF)),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            prompt['icon'],
+                                            color: Colors.black,
+                                            size: 24,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              prompt['text'],
+                                              style: const TextStyle(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.w500,
+                                                fontFamily: "SatoshiR",
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList()),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _messages.length + (isTyping ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == _messages.length && isTyping) {
+                            return buildTypingIndicator();
+                          }
+                          final message = _messages[index];
+                          return Messages(
+                            isUser: message.isUser,
+                            message: message.message,
+                            date: DateFormat('HH:mm').format(message.date),
+                            onAnimatedTextFinished: () {},
+                          );
+                        },
+                      ),
+              ],
+            ),
           ),
           Column(
             children: [
