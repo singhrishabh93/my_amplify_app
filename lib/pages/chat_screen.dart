@@ -32,15 +32,15 @@ class _ChatScreenState extends State<ChatScreen>
 
   final List<Map<String, dynamic>> predefinedPrompts = [
     {
-      "icon": Icons.shopping_bag,
+      "icon": "🛍️", // Emoji as a string
       "text": "I have a party this Friday \nnight, suggest fits!"
     },
     {
-      "icon": Icons.umbrella,
+      "icon": "☔️", // Emoji as a string
       "text": "It’s raining outside, what \nshould I wear to my office?"
     },
     {
-      "icon": Icons.monitor_heart,
+      "icon": "👗", // Emoji as a string
       "text": "Can you help me pair up a \ndress? Here’s a picture of it"
     },
   ];
@@ -250,10 +250,12 @@ class _ChatScreenState extends State<ChatScreen>
                                       ),
                                       child: Row(
                                         children: [
-                                          Icon(
+                                          Text(
                                             prompt['icon'],
-                                            color: Colors.black,
-                                            size: 24,
+                                            style: TextStyle(
+                                              fontSize:
+                                                  30, // Adjust font size as needed for the emoji
+                                            ),
                                           ),
                                           const SizedBox(width: 12),
                                           Expanded(
