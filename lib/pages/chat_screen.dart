@@ -21,7 +21,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen>
     with SingleTickerProviderStateMixin {
-  TextEditingController _userMessage = TextEditingController();
+  final TextEditingController _userMessage = TextEditingController();
   bool isLoading = false;
   bool isTyping = false;
   int typingDots = 1;
@@ -29,6 +29,14 @@ class _ChatScreenState extends State<ChatScreen>
   static const apiKey = "AIzaSyBKtjPeGSaKa65BEfxxP1e8W29Wgao4Ig0";
   final model = GenerativeModel(model: 'gemini-pro', apiKey: apiKey);
   final List<Message> _messages = [];
+
+  final List<String> predefinedPrompts = [
+    "Bold & playful",
+    "Suggest an outfit for a summer day",
+    "How can I style a black blazer?",
+    "Ideas for casual yet chic attire?",
+    "What shoes go with beige trousers?"
+  ];
 
   late Timer typingTimer;
 
@@ -50,8 +58,35 @@ class _ChatScreenState extends State<ChatScreen>
     super.dispose();
   }
 
-  void sendMessage() async {
+  void sendPromptMessage(String message) async {
+    setState(() {
+      _messages.add(Message(
+        isUser: true,
+        message: message,
+        date: DateTime.now(),
+      ));
+      isLoading = true;
+      isTyping = true;
+    });
+
+    final content = [Content.text(message)];
+    final response = await model.generateContent(content);
+
+    setState(() {
+      isTyping = false;
+      _messages.add(Message(
+        isUser: false,
+        message: response.text ?? "",
+        date: DateTime.now(),
+      ));
+      isLoading = false;
+    });
+  }
+
+  void sendManualMessage() async {
     final message = _userMessage.text;
+    if (message.isEmpty) return;
+
     _userMessage.clear();
 
     setState(() {
@@ -161,16 +196,14 @@ class _ChatScreenState extends State<ChatScreen>
             ),
             onPressed: () async {
               try {
-                await Amplify.Auth.signOut(); 
+                await Amplify.Auth.signOut();
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const MyApp(), 
+                    builder: (context) => const MyApp(),
                   ),
                 );
               } catch (e) {
-                safePrint(
-                    'Sign-out failed: $e'); 
+                safePrint('Sign-out failed: $e');
               }
             },
           ),
@@ -179,21 +212,55 @@ class _ChatScreenState extends State<ChatScreen>
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              itemCount: _messages.length + (isTyping ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _messages.length && isTyping) {
-                  return buildTypingIndicator();
-                }
-                final message = _messages[index];
-                return Messages(
-                  isUser: message.isUser,
-                  message: message.message,
-                  date: DateFormat('HH:mm').format(message.date),
-                  onAnimatedTextFinished: () {},
-                );
-              },
-            ),
+            child: _messages.isEmpty
+                ? Center(
+                    child: Wrap(
+                      spacing: 12.0,
+                      runSpacing: 12.0,
+                      children: predefinedPrompts.map((prompt) {
+                        return GestureDetector(
+                          onTap: () => sendPromptMessage(prompt),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(25),
+                              border: Border.all(
+                                color: const Color(0xFFDDDDDD),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              prompt,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontFamily: "SatoshiR",
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: _messages.length + (isTyping ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _messages.length && isTyping) {
+                        return buildTypingIndicator();
+                      }
+                      final message = _messages[index];
+                      return Messages(
+                        isUser: message.isUser,
+                        message: message.message,
+                        date: DateFormat('HH:mm').format(message.date),
+                        onAnimatedTextFinished: () {},
+                      );
+                    },
+                  ),
           ),
           Column(
             children: [
@@ -208,7 +275,7 @@ class _ChatScreenState extends State<ChatScreen>
                 child: Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(25),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                   child: TextFormField(
                     maxLines: 1,
@@ -240,28 +307,22 @@ class _ChatScreenState extends State<ChatScreen>
                         fontSize: 16,
                         fontFamily: "SatoshiR",
                       ),
-                      prefixIcon: Container(
-                        padding: const EdgeInsets.all(14),
-                        child: const Icon(
-                          Icons.add,
-                          color: Color(0xFF1f1f1f),
+                      prefixIcon: const Icon(
+                        Icons.add,
+                        color: Color(0xFF1f1f1f),
+                        size: 24,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.send_rounded,
                           size: 24,
                         ),
-                      ),
-                      suffixIcon: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.send_rounded,
-                            size: 24,
-                          ),
-                          color: isLoading || _userMessage.text.isEmpty
-                              ? const Color(0xFF9B9B9B)
-                              : const Color(0xFF1f1f1f),
-                          onPressed: (isLoading || _userMessage.text.isEmpty)
-                              ? null
-                              : sendMessage,
-                        ),
+                        color: _userMessage.text.isNotEmpty
+                            ? const Color(0xFF1f1f1f)
+                            : const Color(0xFF9B9B9B),
+                        onPressed: _userMessage.text.isEmpty || isLoading
+                            ? null
+                            : sendManualMessage,
                       ),
                     ),
                     style: const TextStyle(
@@ -269,14 +330,6 @@ class _ChatScreenState extends State<ChatScreen>
                       fontSize: 16,
                       fontFamily: "SatoshiR",
                     ),
-                    onChanged: (value) {
-                      setState(() {});
-                    },
-                    onFieldSubmitted: (value) {
-                      if (!isLoading && _userMessage.text.isNotEmpty) {
-                        sendMessage();
-                      }
-                    },
                   ),
                 ),
               ),
