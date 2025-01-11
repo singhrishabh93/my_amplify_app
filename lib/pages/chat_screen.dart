@@ -19,8 +19,7 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen>
-    with SingleTickerProviderStateMixin {
+class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _userMessage = TextEditingController();
   bool isLoading = false;
   bool isTyping = false;
@@ -50,6 +49,13 @@ class _ChatScreenState extends State<ChatScreen>
   @override
   void initState() {
     super.initState();
+    // Add static first message when the screen is initialized
+    _messages.add(Message(
+      isUser: false,
+      message: "Hey ✨\nHow are you doing?",
+      date: DateTime.now(),
+    ));
+
     // Typing dots animation
     typingTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
       setState(() {
@@ -381,3 +387,4 @@ class _ChatScreenState extends State<ChatScreen>
     );
   }
 }
+
