@@ -61,6 +61,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         toolbarHeight: 75,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -90,11 +91,10 @@ class _ChatScreenState extends State<ChatScreen> {
             Text(
               'AI Stylist',
               style: TextStyle(
-                color: Color(0xff1f1f1f),
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                fontFamily: "SatoshiR"
-              ),
+                  color: Color(0xff1f1f1f),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: "SatoshiR"),
             ),
           ],
         ),
@@ -126,53 +126,108 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: medium, vertical: small),
-            child: Expanded(
-              flex: 20,
-              child: TextFormField(
-                maxLines: 6,
-                minLines: 1,
-                controller: _userMessage,
-                decoration: InputDecoration(
-                  contentPadding:
-                      const EdgeInsets.fromLTRB(medium, 0, small, 0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(xlarge),
+          Column(
+            children: [
+              const Divider(
+                height: 1,
+                thickness: 1,
+                color: Color(0xFFEEEEEE),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: medium, vertical: small),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color:
+                        const Color(0xFFF5F5F5), // Lighter gray to match image
+                    borderRadius: BorderRadius.circular(25),
                   ),
-                  hintText: 'Enter prompt',
-                  hintStyle: hintText,
-                  suffixIcon: GestureDetector(
-                    onTap: () {
+                  child: TextFormField(
+                    maxLines: 1,
+                    minLines: 1,
+                    controller: _userMessage,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: const Color(0xFFF5F5F5),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        borderSide: BorderSide.none,
+                      ),
+                      hintText: 'Type your message here...',
+                      hintStyle: const TextStyle(
+                        color: Color(0xFF9B9B9B),
+                        fontSize: 16,
+                        fontFamily: "SatoshiR",
+                      ),
+                      prefixIcon: Container(
+                        padding: const EdgeInsets.all(14),
+                        child: const Icon(
+                          Icons.add, // Changed to plus icon
+                          color: Color(0xFF1f1f1f),
+                          size: 24,
+                        ),
+                      ),
+                      suffixIcon: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isLoading)
+                              Container(
+                                width: 24,
+                                height: 24,
+                                margin: const EdgeInsets.only(right: 16),
+                                child: const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.black),
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            else
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.send_rounded, // Changed to send icon
+                                  color: Color(0xFF1f1f1f),
+                                  size: 24,
+                                ),
+                                onPressed: () {
+                                  if (_userMessage.text.isNotEmpty) {
+                                    sendMessage();
+                                  }
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                    ),
+                    onChanged: (value) {
+                      setState(() {});
+                    },
+                    onFieldSubmitted: (value) {
                       if (!isLoading && _userMessage.text.isNotEmpty) {
                         sendMessage();
                       }
                     },
-                    child: isLoading
-                        ? Container(
-                            width: medium,
-                            height: medium,
-                            margin: const EdgeInsets.all(xsmall),
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(white),
-                              strokeWidth: 3,
-                            ),
-                          )
-                        : Icon(
-                            Icons.arrow_upward,
-                            color: _userMessage.text.isNotEmpty
-                                ? Colors.black
-                                : const Color(0x5A6C6C65),
-                          ),
                   ),
                 ),
-                style: promptText,
-                onChanged: (value) {
-                  setState(() {});
-                },
               ),
-            ),
+            ],
           )
         ],
       ),
