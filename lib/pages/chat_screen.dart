@@ -1,7 +1,11 @@
+import 'package:amplify_authenticator/amplify_authenticator.dart';
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:my_amplify_app/main.dart';
+import 'dart:async';
 
 import '../models/message.dart';
 import '../models/messages.dart';
@@ -15,15 +19,36 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen>
+    with SingleTickerProviderStateMixin {
   TextEditingController _userMessage = TextEditingController();
   bool isLoading = false;
+  bool isTyping = false;
+  int typingDots = 1;
 
   static const apiKey = "AIzaSyBKtjPeGSaKa65BEfxxP1e8W29Wgao4Ig0";
-
+  final model = GenerativeModel(model: 'gemini-pro', apiKey: apiKey);
   final List<Message> _messages = [];
 
-  final model = GenerativeModel(model: 'gemini-pro', apiKey: apiKey);
+  late Timer typingTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Typing dots animation
+    typingTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      setState(() {
+        typingDots = typingDots % 3 + 1; // Cycle through 1, 2, 3 dots
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _userMessage.dispose();
+    typingTimer.cancel();
+    super.dispose();
+  }
 
   void sendMessage() async {
     final message = _userMessage.text;
@@ -36,24 +61,53 @@ class _ChatScreenState extends State<ChatScreen> {
         date: DateTime.now(),
       ));
       isLoading = true;
+      isTyping = true;
     });
 
     final content = [Content.text(message)];
     final response = await model.generateContent(content);
 
     setState(() {
+      isTyping = false;
       _messages.add(Message(
         isUser: false,
         message: response.text ?? "",
         date: DateTime.now(),
       ));
+      isLoading = false;
     });
   }
 
-  void onAnimatedTextFinished() {
-    setState(() {
-      isLoading = false;
-    });
+  Widget buildTypingIndicator() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              '.' * typingDots, // Display dots dynamically
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -68,7 +122,7 @@ class _ChatScreenState extends State<ChatScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(
-            color: Color(0xffDDDDDD),
+            color: const Color(0xffDDDDDD),
             height: 1.0,
           ),
         ),
@@ -91,37 +145,52 @@ class _ChatScreenState extends State<ChatScreen> {
             Text(
               'AI Stylist',
               style: TextStyle(
-                  color: Color(0xff1f1f1f),
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: "SatoshiR"),
+                color: const Color(0xff1f1f1f),
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                fontFamily: "SatoshiB",
+              ),
             ),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(
-              Icons.refresh_rounded,
+              Icons.logout_outlined,
               color: Colors.black,
             ),
-            onPressed: () {},
+            onPressed: () async {
+              try {
+                await Amplify.Auth.signOut(); 
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const MyApp(), 
+                  ),
+                );
+              } catch (e) {
+                safePrint(
+                    'Sign-out failed: $e'); 
+              }
+            },
           ),
         ],
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Expanded(
             child: ListView.builder(
-              itemCount: _messages.length,
+              itemCount: _messages.length + (isTyping ? 1 : 0),
               itemBuilder: (context, index) {
+                if (index == _messages.length && isTyping) {
+                  return buildTypingIndicator();
+                }
                 final message = _messages[index];
                 return Messages(
                   isUser: message.isUser,
                   message: message.message,
                   date: DateFormat('HH:mm').format(message.date),
-                  onAnimatedTextFinished: onAnimatedTextFinished,
-                  // onAnimatedTextFinished: onAnimatedTextFinished,
+                  onAnimatedTextFinished: () {},
                 );
               },
             ),
@@ -138,14 +207,14 @@ class _ChatScreenState extends State<ChatScreen> {
                     horizontal: medium, vertical: small),
                 child: Container(
                   decoration: BoxDecoration(
-                    color:
-                        const Color(0xFFF5F5F5), // Lighter gray to match image
+                    color: const Color(0xFFF5F5F5),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: TextFormField(
                     maxLines: 1,
                     minLines: 1,
                     controller: _userMessage,
+                    enabled: !isLoading,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF5F5F5),
@@ -174,47 +243,31 @@ class _ChatScreenState extends State<ChatScreen> {
                       prefixIcon: Container(
                         padding: const EdgeInsets.all(14),
                         child: const Icon(
-                          Icons.add, // Changed to plus icon
+                          Icons.add,
                           color: Color(0xFF1f1f1f),
                           size: 24,
                         ),
                       ),
                       suffixIcon: Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (isLoading)
-                              Container(
-                                width: 24,
-                                height: 24,
-                                margin: const EdgeInsets.only(right: 16),
-                                child: const CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.black),
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            else
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.send_rounded, // Changed to send icon
-                                  color: Color(0xFF1f1f1f),
-                                  size: 24,
-                                ),
-                                onPressed: () {
-                                  if (_userMessage.text.isNotEmpty) {
-                                    sendMessage();
-                                  }
-                                },
-                              ),
-                          ],
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.send_rounded,
+                            size: 24,
+                          ),
+                          color: isLoading || _userMessage.text.isEmpty
+                              ? const Color(0xFF9B9B9B)
+                              : const Color(0xFF1f1f1f),
+                          onPressed: (isLoading || _userMessage.text.isEmpty)
+                              ? null
+                              : sendMessage,
                         ),
                       ),
                     ),
                     style: const TextStyle(
                       color: Colors.black,
                       fontSize: 16,
+                      fontFamily: "SatoshiR",
                     ),
                     onChanged: (value) {
                       setState(() {});
@@ -228,7 +281,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
