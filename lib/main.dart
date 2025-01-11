@@ -5,6 +5,7 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:my_amplify_app/models/ModelProvider.dart';
 import 'package:my_amplify_app/pages/chat_screen.dart';
+import 'package:my_amplify_app/pages/splash_screen.dart';
 import 'package:my_amplify_app/todo.dart';
 import 'amplify_outputs.dart';
 
@@ -64,7 +65,7 @@ class MyApp extends StatelessWidget {
         builder: Authenticator.builder(),
         home: const SafeArea(
           child: Scaffold(
-            body: ChatScreen(),
+            body: SplashScreen(),
           ),
         ),
       ),
