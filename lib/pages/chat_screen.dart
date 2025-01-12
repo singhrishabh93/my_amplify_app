@@ -1,6 +1,7 @@
 import 'package:amplify_authenticator/amplify_authenticator.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -20,20 +21,19 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateMixin {
+class _ChatScreenState extends State<ChatScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _userMessage = TextEditingController();
   bool isLoading = false;
   bool isTyping = false;
   int typingDots = 1;
 
-  final String apiEndpoint = "https://287eiurk59.execute-api.us-east-1.amazonaws.com/dev/gateway";
+  final String apiEndpoint =
+      "https://287eiurk59.execute-api.us-east-1.amazonaws.com/dev/gateway";
   final List<Message> _messages = [];
 
   final List<Map<String, dynamic>> predefinedPrompts = [
-    {
-      "icon": "🛍️",
-      "text": "I have a party this Friday night, suggest fits!"
-    },
+    {"icon": "🛍️", "text": "I have a party this Friday night, suggest fits!"},
     {
       "icon": "☔️",
       "text": "It's raining outside, what should I wear to my office?"
@@ -67,7 +67,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        return jsonResponse['maissResult']['data']['message'] ?? "No response message";
+        return jsonResponse['maissResult']['data']['message'] ??
+            "No response message";
       } else {
         return "Error: Unable to get response";
       }
@@ -263,11 +264,154 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                       return buildTypingIndicator();
                     }
                     final message = _messages[index];
-                    return Messages(
-                      isUser: message.isUser,
-                      message: message.message,
-                      date: DateFormat('HH:mm').format(message.date),
-                      onAnimatedTextFinished: () {},
+                    return GestureDetector(
+                      onLongPress: !message.isUser
+                          ? () {
+                              showModalBottomSheet(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return Container(
+                                    height: 120,
+                                    child: Column(
+                                      children: [
+                                        ListTile(
+                                          leading: Icon(Icons.copy),
+                                          title: Text('Copy'),
+                                          onTap: () {
+                                            Clipboard.setData(ClipboardData(
+                                                text: message.message));
+                                            Navigator.pop(context);
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'Message copied to clipboard')),
+                                            );
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading:
+                                              Icon(Icons.check_circle_outline),
+                                          title: Text('Select'),
+                                          onTap: () {
+                                            ListView.builder(
+                                              itemCount: _messages.length +
+                                                  (isTyping ? 1 : 0),
+                                              itemBuilder: (context, index) {
+                                                if (index == _messages.length &&
+                                                    isTyping) {
+                                                  return buildTypingIndicator();
+                                                }
+                                                final message =
+                                                    _messages[index];
+                                                return GestureDetector(
+                                                  onLongPress: !message.isUser
+                                                      ? () {
+                                                          showModalBottomSheet(
+                                                            context: context,
+                                                            builder:
+                                                                (BuildContext
+                                                                    context) {
+                                                              return Container(
+                                                                height: 120,
+                                                                child: Column(
+                                                                  children: [
+                                                                    ListTile(
+                                                                      leading: Icon(
+                                                                          Icons
+                                                                              .copy),
+                                                                      title: Text(
+                                                                          'Copy'),
+                                                                      onTap:
+                                                                          () {
+                                                                        Clipboard.setData(ClipboardData(
+                                                                            text:
+                                                                                message.message));
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                        ScaffoldMessenger.of(context)
+                                                                            .showSnackBar(
+                                                                          SnackBar(
+                                                                              content: Text('Message copied to clipboard')),
+                                                                        );
+                                                                      },
+                                                                    ),
+                                                                    ListTile(
+                                                                      leading: Icon(
+                                                                          Icons
+                                                                              .check_circle_outline),
+                                                                      title: Text(
+                                                                          'Select'),
+                                                                      onTap:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                        // Show selectable text in a modal
+                                                                        showDialog(
+                                                                          context:
+                                                                              context,
+                                                                          builder:
+                                                                              (BuildContext context) {
+                                                                            return AlertDialog(
+                                                                              content: SelectableText(
+                                                                                message.message,
+                                                                                style: TextStyle(
+                                                                                  fontSize: 16,
+                                                                                  fontFamily: "SatoshiR",
+                                                                                ),
+                                                                                toolbarOptions: ToolbarOptions(
+                                                                                  copy: true,
+                                                                                  selectAll: true,
+                                                                                  cut: false,
+                                                                                  paste: false,
+                                                                                ),
+                                                                              ),
+                                                                              actions: [
+                                                                                TextButton(
+                                                                                  onPressed: () => Navigator.pop(context),
+                                                                                  child: Text('Close'),
+                                                                                ),
+                                                                              ],
+                                                                            );
+                                                                          },
+                                                                        );
+                                                                      },
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              );
+                                                            },
+                                                          );
+                                                        }
+                                                      : null,
+                                                  child: Messages(
+                                                    isUser: message.isUser,
+                                                    message: message.message,
+                                                    date: DateFormat('HH:mm')
+                                                        .format(message.date),
+                                                    onAnimatedTextFinished:
+                                                        () {},
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                            // Handle message selection
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            }
+                          : null,
+                      child: Messages(
+                        isUser: message.isUser,
+                        message: message.message,
+                        date: DateFormat('HH:mm').format(message.date),
+                        onAnimatedTextFinished: () {},
+                      ),
                     );
                   },
                 ),
@@ -287,7 +431,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                 margin: const EdgeInsets.symmetric(vertical: 8),
                                 padding: const EdgeInsets.all(16),
                                 constraints: BoxConstraints(
-                                  maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                  maxWidth:
+                                      MediaQuery.of(context).size.width * 0.7,
                                 ),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
@@ -297,7 +442,8 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                                     bottomRight: Radius.circular(0),
                                     topRight: Radius.circular(18),
                                   ),
-                                  border: Border.all(color: const Color(0xffA99AFF)),
+                                  border: Border.all(
+                                      color: const Color(0xffA99AFF)),
                                 ),
                                 child: Row(
                                   children: [
