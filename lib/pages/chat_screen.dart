@@ -3,7 +3,8 @@ import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:my_amplify_app/main.dart';
 import 'dart:async';
 
@@ -25,51 +26,54 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
   bool isTyping = false;
   int typingDots = 1;
 
-  static const apiKey = "AIzaSyBKtjPeGSaKa65BEfxxP1e8W29Wgao4Ig0";
-  final model = GenerativeModel(model: 'gemini-pro', apiKey: apiKey);
+  final String apiEndpoint = "https://287eiurk59.execute-api.us-east-1.amazonaws.com/dev/gateway";
   final List<Message> _messages = [];
 
   final List<Map<String, dynamic>> predefinedPrompts = [
     {
-      "icon": "🛍️", // Emoji as a string
+      "icon": "🛍️",
       "text": "I have a party this Friday night, suggest fits!"
     },
     {
-      "icon": "☔️", // Emoji as a string
-      "text": "It’s raining outside, what should I wear to my office?"
+      "icon": "☔️",
+      "text": "It's raining outside, what should I wear to my office?"
     },
     {
-      "icon": "👗", // Emoji as a string
-      "text": "Can you help me pair up a dress? Here’s a picture of it"
+      "icon": "👗",
+      "text": "Can you help me pair up a dress? Here's a picture of it"
     },
   ];
 
   late Timer typingTimer;
 
-  @override
-  void initState() {
-    super.initState();
+  Future<String> sendMessageToAPI(String messageContent) async {
+    try {
+      final response = await http.post(
+        Uri.parse(apiEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          "userId": "+918837671812",
+          "userFullName": "Ankur",
+          "userWhatsAppNumber": "+918837671812",
+          "messageId": "wamid.123456789",
+          "messageType": "INTERACTIVE",
+          "messageDirection": "INBOUND",
+          "messageContent": messageContent,
+          "messageContext": "any"
+        }),
+      );
 
-    // Add static first welcome message when the screen is initialized
-    _messages.add(Message(
-      isUser: false,
-      message: "Hey ✨\nHow are you doing?",
-      date: DateTime.now(),
-    ));
-
-    // Typing dots animation
-    typingTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      setState(() {
-        typingDots = typingDots % 3 + 1; // Cycle through 1, 2, 3 dots
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _userMessage.dispose();
-    typingTimer.cancel();
-    super.dispose();
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        return jsonResponse['maissResult']['data']['message'] ?? "No response message";
+      } else {
+        return "Error: Unable to get response";
+      }
+    } catch (e) {
+      return "Error: $e";
+    }
   }
 
   void sendPromptMessage(String message) async {
@@ -83,14 +87,13 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       isTyping = true;
     });
 
-    final content = [Content.text(message)];
-    final response = await model.generateContent(content);
+    final response = await sendMessageToAPI(message);
 
     setState(() {
       isTyping = false;
       _messages.add(Message(
         isUser: false,
-        message: response.text ?? "",
+        message: response,
         date: DateTime.now(),
       ));
       isLoading = false;
@@ -113,18 +116,43 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
       isTyping = true;
     });
 
-    final content = [Content.text(message)];
-    final response = await model.generateContent(content);
+    final response = await sendMessageToAPI(message);
 
     setState(() {
       isTyping = false;
       _messages.add(Message(
         isUser: false,
-        message: response.text ?? "",
+        message: response,
         date: DateTime.now(),
       ));
       isLoading = false;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Add static first welcome message when the screen is initialized
+    _messages.add(Message(
+      isUser: false,
+      message: "Hey ✨\nHow are you doing?",
+      date: DateTime.now(),
+    ));
+
+    // Typing dots animation
+    typingTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      setState(() {
+        typingDots = typingDots % 3 + 1;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _userMessage.dispose();
+    typingTimer.cancel();
+    super.dispose();
   }
 
   Widget buildTypingIndicator() {
@@ -146,7 +174,7 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
               ],
             ),
             child: Text(
-              '.' * typingDots, // Display dots dynamically
+              '.' * typingDots,
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
