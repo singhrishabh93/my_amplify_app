@@ -6,7 +6,6 @@ import 'package:my_amplify_app/widgets/message_actions.dart';
 import '../utils/size.dart';
 import '../utils/style.dart';
 
-
 class ChatMessage extends StatelessWidget {
   final bool isUser;
   final String message;
@@ -29,7 +28,8 @@ class ChatMessage extends StatelessWidget {
     return GestureDetector(
       onLongPress: () => onLongPress(context),
       child: Column(
-        crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Align(
             alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -48,9 +48,11 @@ class ChatMessage extends StatelessWidget {
                     color: isUser ? userChat : resChat,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
-                      bottomLeft: isUser ? const Radius.circular(18) : Radius.zero,
+                      bottomLeft:
+                          isUser ? const Radius.circular(18) : Radius.zero,
                       topRight: const Radius.circular(18),
-                      bottomRight: !isUser ? const Radius.circular(18) : Radius.zero,
+                      bottomRight:
+                          !isUser ? const Radius.circular(18) : Radius.zero,
                     ),
                   ),
                   child: Column(
@@ -96,8 +98,12 @@ class ChatMessage extends StatelessWidget {
                 onCopy: () {
                   Clipboard.setData(ClipboardData(text: message));
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Message copied to clipboard')),
+                    const SnackBar(
+                        content: Text('Message copied to clipboard')),
                   );
+                },
+                onMoreOptions: () {
+                  // Show more options menu (we can implement this later)
                 },
               ),
             ),

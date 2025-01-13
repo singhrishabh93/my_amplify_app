@@ -6,6 +6,7 @@ class MessageActions extends StatelessWidget {
   final VoidCallback onDislike;
   final VoidCallback onShare;
   final VoidCallback onCopy;
+  final VoidCallback onMoreOptions;
 
   const MessageActions({
     Key? key,
@@ -13,6 +14,7 @@ class MessageActions extends StatelessWidget {
     required this.onDislike,
     required this.onShare,
     required this.onCopy,
+    required this.onMoreOptions,
   }) : super(key: key);
 
   @override
@@ -50,6 +52,12 @@ class MessageActions extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.copy),
           onPressed: onCopy,
+          iconSize: 20,
+          color: Colors.grey[700],
+        ),
+        IconButton(
+          icon: const Icon(Icons.more_vert),
+          onPressed: onMoreOptions,
           iconSize: 20,
           color: Colors.grey[700],
         ),
