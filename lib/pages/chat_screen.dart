@@ -27,6 +27,8 @@ class _ChatScreenState extends State<ChatScreen>
   bool isLoading = false;
   bool isTyping = false;
   int typingDots = 1;
+  bool showPredefinedPrompts = true;
+  bool hasUserSentFirstMessage = false;
 
   final String apiEndpoint =
       "https://287eiurk59.execute-api.us-east-1.amazonaws.com/dev/gateway";
@@ -86,6 +88,8 @@ class _ChatScreenState extends State<ChatScreen>
       ));
       isLoading = true;
       isTyping = true;
+      hasUserSentFirstMessage = true;
+      showPredefinedPrompts = false;
     });
 
     final response = await sendMessageToAPI(message);
@@ -115,6 +119,8 @@ class _ChatScreenState extends State<ChatScreen>
       ));
       isLoading = true;
       isTyping = true;
+      hasUserSentFirstMessage = true;
+      showPredefinedPrompts = false;
     });
 
     final response = await sendMessageToAPI(message);
@@ -133,6 +139,16 @@ class _ChatScreenState extends State<ChatScreen>
   @override
   void initState() {
     super.initState();
+
+    // Add listener for text changes
+    _userMessage.addListener(() {
+      setState(() {
+        // Only show prompts if user hasn't sent their first message
+        if (!hasUserSentFirstMessage) {
+          showPredefinedPrompts = _userMessage.text.isEmpty;
+        }
+      });
+    });
 
     // Add static first welcome message when the screen is initialized
     _messages.add(Message(
@@ -294,109 +310,34 @@ class _ChatScreenState extends State<ChatScreen>
                                               Icon(Icons.check_circle_outline),
                                           title: Text('Select'),
                                           onTap: () {
-                                            ListView.builder(
-                                              itemCount: _messages.length +
-                                                  (isTyping ? 1 : 0),
-                                              itemBuilder: (context, index) {
-                                                if (index == _messages.length &&
-                                                    isTyping) {
-                                                  return buildTypingIndicator();
-                                                }
-                                                final message =
-                                                    _messages[index];
-                                                return GestureDetector(
-                                                  onLongPress: !message.isUser
-                                                      ? () {
-                                                          showModalBottomSheet(
-                                                            context: context,
-                                                            builder:
-                                                                (BuildContext
-                                                                    context) {
-                                                              return Container(
-                                                                height: 120,
-                                                                child: Column(
-                                                                  children: [
-                                                                    ListTile(
-                                                                      leading: Icon(
-                                                                          Icons
-                                                                              .copy),
-                                                                      title: Text(
-                                                                          'Copy'),
-                                                                      onTap:
-                                                                          () {
-                                                                        Clipboard.setData(ClipboardData(
-                                                                            text:
-                                                                                message.message));
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                        ScaffoldMessenger.of(context)
-                                                                            .showSnackBar(
-                                                                          SnackBar(
-                                                                              content: Text('Message copied to clipboard')),
-                                                                        );
-                                                                      },
-                                                                    ),
-                                                                    ListTile(
-                                                                      leading: Icon(
-                                                                          Icons
-                                                                              .check_circle_outline),
-                                                                      title: Text(
-                                                                          'Select'),
-                                                                      onTap:
-                                                                          () {
-                                                                        Navigator.pop(
-                                                                            context);
-                                                                        // Show selectable text in a modal
-                                                                        showDialog(
-                                                                          context:
-                                                                              context,
-                                                                          builder:
-                                                                              (BuildContext context) {
-                                                                            return AlertDialog(
-                                                                              content: SelectableText(
-                                                                                message.message,
-                                                                                style: TextStyle(
-                                                                                  fontSize: 16,
-                                                                                  fontFamily: "SatoshiR",
-                                                                                ),
-                                                                                toolbarOptions: ToolbarOptions(
-                                                                                  copy: true,
-                                                                                  selectAll: true,
-                                                                                  cut: false,
-                                                                                  paste: false,
-                                                                                ),
-                                                                              ),
-                                                                              actions: [
-                                                                                TextButton(
-                                                                                  onPressed: () => Navigator.pop(context),
-                                                                                  child: Text('Close'),
-                                                                                ),
-                                                                              ],
-                                                                            );
-                                                                          },
-                                                                        );
-                                                                      },
-                                                                    ),
-                                                                  ],
-                                                                ),
-                                                              );
-                                                            },
-                                                          );
-                                                        }
-                                                      : null,
-                                                  child: Messages(
-                                                    isUser: message.isUser,
-                                                    message: message.message,
-                                                    date: DateFormat('HH:mm')
-                                                        .format(message.date),
-                                                    onAnimatedTextFinished:
-                                                        () {},
+                                            Navigator.pop(context);
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  content: SelectableText(
+                                                    message.message,
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontFamily: "SatoshiR",
+                                                    ),
+                                                    toolbarOptions: ToolbarOptions(
+                                                      copy: true,
+                                                      selectAll: true,
+                                                      cut: false,
+                                                      paste: false,
+                                                    ),
                                                   ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.pop(context),
+                                                      child: Text('Close'),
+                                                    ),
+                                                  ],
                                                 );
                                               },
                                             );
-                                            // Handle message selection
-                                            Navigator.pop(context);
                                           },
                                         ),
                                       ],
@@ -415,7 +356,7 @@ class _ChatScreenState extends State<ChatScreen>
                     );
                   },
                 ),
-                if (_messages.length == 1)
+                if (_messages.length == 1 && showPredefinedPrompts)
                   Align(
                     alignment: Alignment.bottomRight,
                     child: Padding(
