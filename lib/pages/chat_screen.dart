@@ -21,8 +21,7 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen>
-    with SingleTickerProviderStateMixin {
+class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _userMessage = TextEditingController();
   bool isLoading = false;
   bool isTyping = false;
@@ -30,20 +29,14 @@ class _ChatScreenState extends State<ChatScreen>
   bool showPredefinedPrompts = true;
   bool hasUserSentFirstMessage = false;
 
-  final String apiEndpoint =
-      "https://287eiurk59.execute-api.us-east-1.amazonaws.com/dev/gateway";
+  final String apiEndpoint = "https://287eiurk59.execute-api.us-east-1.amazonaws.com/dev/gateway";
   final List<Message> _messages = [];
 
   final List<Map<String, dynamic>> predefinedPrompts = [
-    {"icon": "🛍️", "text": "I have a party this Friday night, suggest fits!"},
-    {
-      "icon": "☔️",
-      "text": "It's raining outside, what should I wear to my office?"
-    },
-    {
-      "icon": "👗",
-      "text": "Can you help me pair up a dress? Here's a picture of it"
-    },
+    {"icon": "👕", "text": "Get an outfit suggestion"},
+    {"icon": "💫", "text": "Get styling ideas"},
+    {"icon": "👀", "text": "Review my look!"},
+    {"icon": "🎨", "text": "Pairing Suggestions"},
   ];
 
   late Timer typingTimer;
@@ -69,8 +62,7 @@ class _ChatScreenState extends State<ChatScreen>
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        return jsonResponse['maissResult']['data']['message'] ??
-            "No response message";
+        return jsonResponse['maissResult']['data']['message'] ?? "No response message";
       } else {
         return "Error: Unable to get response";
       }
@@ -140,24 +132,20 @@ class _ChatScreenState extends State<ChatScreen>
   void initState() {
     super.initState();
 
-    // Add listener for text changes
     _userMessage.addListener(() {
       setState(() {
-        // Only show prompts if user hasn't sent their first message
         if (!hasUserSentFirstMessage) {
           showPredefinedPrompts = _userMessage.text.isEmpty;
         }
       });
     });
 
-    // Add static first welcome message when the screen is initialized
     _messages.add(Message(
       isUser: false,
       message: "Hey ✨\nHow are you doing?",
       date: DateTime.now(),
     ));
 
-    // Typing dots animation
     typingTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
       setState(() {
         typingDots = typingDots % 3 + 1;
@@ -306,8 +294,7 @@ class _ChatScreenState extends State<ChatScreen>
                                           },
                                         ),
                                         ListTile(
-                                          leading:
-                                              Icon(Icons.check_circle_outline),
+                                          leading: Icon(Icons.check_circle_outline),
                                           title: Text('Select'),
                                           onTap: () {
                                             Navigator.pop(context);
@@ -358,60 +345,56 @@ class _ChatScreenState extends State<ChatScreen>
                 ),
                 if (_messages.length == 1 && showPredefinedPrompts)
                   Align(
-                    alignment: Alignment.bottomRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: predefinedPrompts.map((prompt) {
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      height: 90,
+                      margin: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        itemCount: predefinedPrompts.length,
+                        itemBuilder: (context, index) {
+                          final prompt = predefinedPrompts[index];
                           return GestureDetector(
                             onTap: () => sendPromptMessage(prompt['text']),
-                            child: IntrinsicWidth(
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(vertical: 8),
-                                padding: const EdgeInsets.all(16),
-                                constraints: BoxConstraints(
-                                  maxWidth:
-                                      MediaQuery.of(context).size.width * 0.7,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(18),
-                                    bottomLeft: Radius.circular(18),
-                                    bottomRight: Radius.circular(0),
-                                    topRight: Radius.circular(18),
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              width: MediaQuery.of(context).size.width * 0.43, // Shows approximately 2 prompts
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: const Color(0xffA99AFF)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    prompt['icon'],
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                    ),
                                   ),
-                                  border: Border.all(
-                                      color: const Color(0xffA99AFF)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      prompt['icon'],
+                                  const SizedBox(width: 12),
+                                  Flexible(
+                                    child: Text(
+                                      prompt['text'],
                                       style: const TextStyle(
-                                        fontSize: 30,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: "SatoshiR",
                                       ),
+                                      softWrap: true,
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        prompt['text'],
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w500,
-                                          fontFamily: "SatoshiR",
-                                        ),
-                                        softWrap: true,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
-                        }).toList(),
+                        },
                       ),
                     ),
                   ),
