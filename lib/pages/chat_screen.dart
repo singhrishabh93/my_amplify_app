@@ -266,9 +266,9 @@ class _ChatScreenState extends State<ChatScreen> with SingleTickerProviderStateM
                       message: message.message,
                       date: DateFormat('HH:mm').format(message.date),
                       onAnimatedTextFinished: () {},
-                      onLongPress: !message.isUser 
-                          ? (context) => _showMessageOptions(context, message)
-                          : (_) {},
+                      // onLongPress: !message.isUser 
+                      //     ? (context) => _showMessageOptions(context, message)
+                      //     : (_) {},
                     );
                   },
                 ),
