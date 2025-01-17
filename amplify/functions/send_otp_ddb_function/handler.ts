@@ -68,16 +68,13 @@ export const handler = async (event: DynamoDBStreamEvent) => {
           });
 
           const response = await axios({
-            method: 'post',
-            url: "https://www.fast2sms.com/dev/bulkV2",
+            method: 'get',  // Note: Changed to GET as parameters are in query string
+            url: buildAuthKeyURL(phoneNumber, otp),
             headers: {
-              'authorization': process.env.FAST2SMS_API_KEY || "9sMMtXc0wFRolidGMZuDbwBgQISaDM6x4yjvOksdEbG3OBYJgCKSE7m7Ir8g",
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
+                'Accept': 'application/json'
             },
-            data: requestData,
-            timeout: 10000 // 10 second timeout
-          });
+            timeout: 10000  // Maintaining the 10s timeout
+        });
 
           console.log("[OTP_SENDER] SMS API Response:", {
             status: response.status,
@@ -123,4 +120,17 @@ export const handler = async (event: DynamoDBStreamEvent) => {
     });
     throw error; // Rethrow to trigger Lambda retry
   }
+};
+
+const buildAuthKeyURL = (recipientMobile: string, otp: string): string => {
+  const params = new URLSearchParams({
+      authkey: process.env.AUTHKEY_API_KEY || '864c013b495c69b6',
+      mobile: recipientMobile,
+      country_code: '91',
+      sid: '16026',
+      company: 'MONOVA.IN',
+      otp: otp
+  });
+
+  return `https://api.authkey.io/request?${params.toString()}`;
 };

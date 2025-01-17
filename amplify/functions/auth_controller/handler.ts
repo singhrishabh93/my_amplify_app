@@ -1,5 +1,4 @@
-import { generateClient } from "aws-amplify/data";
-import { type Schema } from "../../data/resource";
+
 import type { APIGatewayProxyHandler } from "aws-lambda";
 import { Amplify } from "aws-amplify";
 import * as jwt from "jsonwebtoken";
