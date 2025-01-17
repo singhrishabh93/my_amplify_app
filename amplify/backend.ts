@@ -6,33 +6,108 @@ import {
   LambdaIntegration,
   RestApi,
 } from "aws-cdk-lib/aws-apigateway";
+import { WebSocketApi, WebSocketStage } from "aws-cdk-lib/aws-apigatewayv2";
+
 import { Policy, PolicyStatement, Effect } from "aws-cdk-lib/aws-iam";
 import { EventSourceMapping, StartingPosition } from "aws-cdk-lib/aws-lambda";
 
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
-import { generateOTPController } from "./functions/otpController/generateOTPController/resource";
-import { sendOtpDdbFcuntion } from "./functions/otpController/sendOtpDdbFcuntion/resource";
-import { verifyOTPController } from "./functions/otpController/verifyOTPController/resource";
+import { otpController } from "./functions/otp_controller/resource";
+import { authController } from "./functions/auth_controller/resource";
+import { sendOtpDdbFcuntion } from "./functions/send_otp_ddb_function/resource";
+// import { websocketController } from "./functions/websocketController/resource";
+import { connectController } from "./functions/websocketController/connect/resource";
+import { disconnectController } from "./functions/websocketController/disconnect/resource";
+import { inboundController } from "./functions/websocketController/inbound/resource";
+import { outboundController } from "./functions/websocketController/outbound/resource";
+import { WebSocketLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 // ...existing backend definition...
 const backend = defineBackend({
   auth,
   data,
-  generateOTPController,
+  otpController,
+  authController,
   sendOtpDdbFcuntion,
-  verifyOTPController,
-  // ...other existing controllers
+  inboundController,
+  outboundController,
+  connectController,
+  disconnectController,
+});
+const apiStack = backend.createStack("demo-api-stack");
+
+// Create WebSocket API
+const wsApi = new WebSocketApi(apiStack, "WebSocketApi", {
+  apiName: "chatSocket",
+  routeSelectionExpression: "$request.body.action",
 });
 
-const { cfnResources } = backend.data.resources;
+//Create websocket stage
+const wsStage = new WebSocketStage(apiStack, "WebSocketStage", {
+  webSocketApi: wsApi,
+  stageName: "dev",
+  autoDeploy: true,
+});
 
-cfnResources.amplifyDynamoDbTables['OTPRecord'].timeToLiveAttribute = {
-  attributeName: "ttl",
-  enabled: true,
-};
+const ws_connect_intergration = new WebSocketLambdaIntegration(
+  "connectIntegration",
+  backend.connectController.resources.lambda
+)
+
+const ws_disconnect_intergration = new WebSocketLambdaIntegration(
+  "disconnectIntegration",
+  backend.disconnectController.resources.lambda
+)
+
+const ws_inbound_integration = new WebSocketLambdaIntegration(
+  "inboundIntegration",
+  backend.inboundController.resources.lambda
+);
+
+const ws_outbound_integration = new WebSocketLambdaIntegration(
+  "outboundIntegration",
+  backend.outboundController.resources.lambda
+);
 
 
-const apiStack = backend.createStack("demo-api-stack");
+wsApi.addRoute("$connect", {
+  integration: ws_connect_intergration,
+  
+});
+
+wsApi.addRoute("$disconnect", {
+  integration: ws_disconnect_intergration,
+});
+
+wsApi.addRoute("inbound", {
+  integration: ws_inbound_integration,
+});
+
+wsApi.addRoute("outbound", {
+  integration: ws_outbound_integration,
+});
+
+
+
+// Create general WebSocket API permissions
+const wsPolicy = new Policy(apiStack, "WebSocketPolicy", {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: [
+        "execute-api:Invoke",
+        "execute-api:ManageConnections",
+        "apigateway:*"
+      ],
+      resources: [
+        `*`,
+      ]
+    }),
+  ]
+});
+
+backend.auth.resources.authenticatedUserIamRole.attachInlinePolicy(wsPolicy);
+backend.auth.resources.unauthenticatedUserIamRole.attachInlinePolicy(wsPolicy);
 
 // Create OTP API
 const otpApi = new RestApi(apiStack, "OtpApi", {
@@ -47,34 +122,54 @@ const otpApi = new RestApi(apiStack, "OtpApi", {
 });
 
 // Lambda Integrations
-const otpGenIntegration = new LambdaIntegration(
-  backend.generateOTPController.resources.lambda
+const otpIntegration = new LambdaIntegration(
+  backend.otpController.resources.lambda
 );
-const otpVerifyIntegration = new LambdaIntegration(
-  backend.verifyOTPController.resources.lambda
-);
-
-
 
 // API Routes
-const otpPath = otpApi.root.addResource("otp" , {
-  defaultMethodOptions: {
-    authorizationType: AuthorizationType.NONE,
-  },
-});
-const generatePath = otpPath.addResource("generate" , {
-  defaultMethodOptions: {
-    authorizationType: AuthorizationType.NONE,
-  },
-});
-const verifyPath = otpPath.addResource("verify" , {
+const otpPath = otpApi.root.addResource("otp", {
   defaultMethodOptions: {
     authorizationType: AuthorizationType.NONE,
   },
 });
 
-generatePath.addMethod("POST", otpGenIntegration);
-verifyPath.addMethod("POST", otpVerifyIntegration);
+otpPath.addMethod("GET", otpIntegration);
+otpPath.addMethod("POST", otpIntegration);
+
+otpPath.addProxy({
+  anyMethod: true,
+  defaultIntegration: otpIntegration,
+});
+
+// Auth API
+const authApi = new RestApi(apiStack, "AuthApi", {
+  restApiName: "authApi",
+  deploy: true,
+  deployOptions: { stageName: "dev" },
+  defaultCorsPreflightOptions: {
+    allowOrigins: Cors.ALL_ORIGINS,
+    allowMethods: Cors.ALL_METHODS,
+    allowHeaders: Cors.DEFAULT_HEADERS,
+  },
+});
+
+const authIntegration = new LambdaIntegration(
+  backend.authController.resources.lambda
+);
+
+const authPath = authApi.root.addResource("auth", {
+  defaultMethodOptions: {
+    authorizationType: AuthorizationType.NONE,
+  },
+});
+
+authPath.addProxy({
+  anyMethod: true,
+  defaultIntegration: authIntegration,
+});
+
+authPath.addMethod("POST", authIntegration);
+authPath.addMethod("GET", authIntegration);
 
 // Set up DDB Stream
 const otpTable = backend.data.resources.tables["OTPRecord"];
@@ -121,6 +216,8 @@ const apiRestPolicy = new Policy(apiStack, "RestApiPolicy", {
         // ...existing resources...
         `${otpApi.arnForExecuteApi("*", "/", "dev")}`,
         `${otpApi.arnForExecuteApi("*", "/otp/*", "dev")}`,
+        `${authApi.arnForExecuteApi("*", "/", "dev")}`,
+        `${authApi.arnForExecuteApi("*", "/auth/*", "dev")}`,
       ],
     }),
   ],
@@ -142,6 +239,11 @@ backend.addOutput({
         endpoint: otpApi.url,
         region: Stack.of(otpApi).region,
         apiName: otpApi.restApiName,
+      },
+      [authApi.restApiName]: {
+        endpoint: authApi.url,
+        region: Stack.of(authApi).region,
+        apiName: authApi.restApiName,
       },
     },
   },

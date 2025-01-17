@@ -8,15 +8,6 @@ export const auth = defineAuth({
   loginWith: {
     phone: true,
   },
-  // multifactor:{
-  //   mode: 'REQUIRED',
-  //   sms: true,  
-  // },
-  userAttributes:{
-    phoneNumber:{
-      required: true,
-    }
-  },
 });
 
 
